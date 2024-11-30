@@ -296,7 +296,7 @@ class BookController extends Controller
             $author->delete();
     
             return response()->json([
-                'message' => 'Auteur supprimé avec succès.',
+                 
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -349,19 +349,19 @@ class BookController extends Controller
 public function saveauthor(Request $request)
 {
     // Validation des données entrantes
-    // $validator = Validator::make($request->all(), [
-    //     'name' => 'required|string|max:255',
-    //     'gender' => 'nullable|string|max:10',
-    //     'country' => 'nullable|string|max:100',
-    //     'imageauthor' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-    //     'description' => 'nullable|string',
-    //     'date_nais' => 'nullable|date',
-    //     'email' => 'nullable|email|unique:authors,email',
-    // ]);
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255',
+        'gender' => 'nullable|string|max:10',
+        'country' => 'nullable|string|max:100',
+        'imageauthor' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'description' => 'nullable|string',
+        'date_nais' => 'nullable|date',
+        'email' => 'nullable|email|unique:authors,email',
+    ]);
 
-    // if ($validator->fails()) {
-    //     return response()->json($validator->errors(), 422);
-    // }
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 422);
+    }
 
     // Gérer le téléchargement de l'image
  
@@ -386,6 +386,42 @@ public function saveauthor(Request $request)
 
     return response()->json($author, 201);
 }
+
+
+
+public function updateAuthor(Request $request, $id)
+{
+    
+
+    // Find the author to update
+    $author = Author::findOrFail($id);
+
+    // Update the author's attributes
+    $author->update([
+        'name' => $request->name,
+        // ... other fields to update
+    ]);
+
+    // Handle image update (optional)
+    if ($request->hasFile('imageauthor')) {
+        // Delete the old image if it exists
+        if ($author->imageauthor) {
+            Storage::delete('public/images/authors/' . $author->imageauthor);
+        }
+
+        // Upload the new image
+        $file = $request->file('imageauthor');
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        $file->move(public_path('images/authors'), $fileName);
+
+        // Update the author's image path
+        $author->imageauthor = $fileName;
+        $author->save();
+    }
+
+    return response()->json($author, 200);
+}
+
 
 
 public function getbyauthor(string $id)
