@@ -5,7 +5,7 @@ use App\Models\Sale;
 use App\Models\Book;
 
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Exception;
@@ -18,16 +18,9 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         try {
-            // Définir le nombre d'éléments par page
-            $perPage = 10; 
-    
-            // Tenter de récupérer les livres depuis le cache
-            $books = Cache::remember('books_page_' . $request->input('page', 1), now()->addMinutes(10), function () use ($perPage) {
-                return Sale::paginate($perPage); // Récupérer les livres avec pagination
-            });
-    
-            // Retourner les livres en JSON
-            return response()->json($books);
+            $sales = Sale::with('book')->orderBy('created_at', 'desc')->get();
+            return response()->json($sales);
+     
     
         } catch (Exception $e) {
             // Retourner une réponse JSON avec le message d'erreur
@@ -51,55 +44,22 @@ class SaleController extends Controller
 
     public function store(Request $request)
     {
-         // Validation des données d'entrée
-         $request->validate([
-
+        Log::info($request);
+        $request->validate([
             'sale_date' => 'required|date',
-            'paiement_type' => 'required|string',
-            'status' => 'required|string',
-            'books' => 'required|array',
-            'books.*.book_id' => 'required|exists:books,id',
-            'books.*.quantity' => 'required|integer|min:1',
-            'books.*.type_book' => 'required|string',
-
+            'paiement_type' => 'required|string|max:255',
+            'total_price' => 'required|numeric',
+            'user_id' => 'required|numeric',
+            'status' => 'required|string|max:255',
+            'quantity' => 'required|integer',
+            'type_book' => 'required|string|max:255',
+            'book_id' => 'required|exists:books,id', // Assurez-vous que l'ID du livre existe
         ]);
 
         
         try {
-            // Créer la vente
-            $sale = Sale::create([
-                'sale_date' => $request->sale_date,
-                'paiement_type' => $request->paiement_type,
-                'total_price' => 0, // Cela sera mis à jour après
-                'status' => $request->status,
-            ]);
-
-            // Calculer le prix total et ajouter les livres à la vente
-            $totalPrice = 0;
-            foreach ($request->books as $bookData) {
-                $book = Book::find($bookData['book_id']);
-                $quantity = $bookData['quantity'];
-                $typeBook = $bookData['type_book'];
-
-                // Calculer le prix total
-                $totalPrice += $book->price * $quantity;
-
-                // Attacher le livre à la vente avec les détails
-                $sale->books()->attach($book->id, [
-                    'quantity' => $quantity,
-                    'total_price' => $book->price * $quantity,
-                    'type_book' => $typeBook,
-                ]);
-            }
-
-            // Mettre à jour le prix total de la vente
-            $sale->total_price = $totalPrice;
-            $sale->save();
-
-
-            // Retourner une réponse JSON
-            return response()->json(['message' => 'Commande passée avec succès!', 'sale' => $sale], 201);
-
+            $sale = Sale::create($request->all());
+            return response()->json($sale, 201);
         } catch (\Exception $e) {
 
             // Annuler la transaction en cas d'erreur
@@ -115,7 +75,14 @@ class SaleController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try{
+        $sale = Sale::findOrFail($id);
+        return response()->json($sale);
+    } catch (\Exception $e) {
+
+        // Annuler la transaction en cas d'erreur
+        return response()->json(['error' => $e->getMessage()], 400);
+    }
     }
 
     /**
@@ -131,7 +98,25 @@ class SaleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        try{
+        $request->validate([
+            'sale_date' => 'required|date',
+            'paiement_type' => 'string|max:255',
+            'total_price' => 'numeric',
+            'status' => 'string|max:255',
+            'quantity' => 'integer',
+            'type_book' => 'string|max:255',
+            'book_id' => 'exists:books,id',
+        ]);
+        $sale = Sale::findOrFail($id);
+        $sale->update($request->all());
+        return response()->json($sale);
+    }
+        catch (\Exception $e) {
+
+            // Annuler la transaction en cas d'erreur
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -139,6 +124,17 @@ class SaleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try{
+        $sale = Sale::findOrFail($id);
+        $sale->delete();
+        return response()->json(null, 204);
     }
+    catch (\Exception $e) {
+
+        // Annuler la transaction en cas d'erreur
+        return response()->json(['error' => $e->getMessage()], 400);
+    }
+   }
+
+ 
 }

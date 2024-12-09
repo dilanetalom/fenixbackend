@@ -1,10 +1,11 @@
-w<?php
+<?php
 
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class EventController extends Controller
@@ -16,7 +17,7 @@ class EventController extends Controller
     {
         try {
             // Récupérer tous les evennements 
-       $event = Event::all();
+       $event = Event::orderBy('created_at', 'desc')->get();
 
        // Retourner les evennements  en JSON
        return response()->json($event);
@@ -48,8 +49,11 @@ class EventController extends Controller
             'name'=> 'required|string|max:255',
             'description'=> 'required|string|max:255',
             'eventdate'=> 'required|string|max:255',
-            'image'=> 'required|string|max:255',
+            'enddate'=> 'required|string|max:255',
+            'frome'=> 'required|string|max:255',
+            'type'=> 'required|string|max:255',
             'user_id'=> 'required|string|max:255',
+            'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -69,9 +73,13 @@ class EventController extends Controller
             $event = Event::create([
                 'name'=> $request->name,
                 'description'=> $request->description,
+                'frome'=> $request->frome,
+                'type'=> $request->type,
                 'eventdate'=> $request->eventdate,
-                'image'=>'images/event'. $imageName ,
+                'enddate'=> $request->enddate,
+                'image'=> $imageName ,
                 'user_id'=> $request->user_id,
+                'author_id'=> $request->author_id,
             ]);
 
             return response()->json(['message' => 'Book created successfully', 'event' => $event], 201);
@@ -126,8 +134,10 @@ class EventController extends Controller
      */
     public function update(Request $request, string $id)
     {
+       
         try {
             // Trouver le evennement par son ID
+            Log::info('Données reçues pour mise à jour:', $request->all());
             $event = Event::findOrFail($id);
 
             if ($request->hasFile('image')) {
@@ -144,7 +154,7 @@ class EventController extends Controller
                 }
     
                 // Mettre à jour le chemin de la nouvelle image        
-                $event->image = 'images/event/' . $image;          
+                $event->image =  $image;          
            
             }
     
@@ -152,9 +162,13 @@ class EventController extends Controller
             $event->update([
                 'name'=> $request->name,
                 'description'=> $request->description,
+                'frome'=> $request->frome,
+                'type'=> $request->type,
                 'eventdate'=> $request->eventdate,
+                'enddate'=> $request->eventdate,
                 'image'=>$request->image ,
                 'user_id'=> $request->user_id,
+                'author_id'=> $request->author_id,
             ]);
     
             return response()->json([

@@ -53,6 +53,32 @@ public function login(Request $request)
 }
 
 
+
+public function update(Request $request, $userId)
+{
+    $user = User::findOrFail($userId);
+
+    // Update user data
+    $user->update([
+        'name' => $request->name,
+        'email' => $request->email,
+        'gender' => $request->gender,
+        'role' => $request->role,
+    ]);
+
+    // Update password if provided
+    if ($request->filled('password')) {
+        $user->password = Hash::make($request->password);
+        $user->save();
+    }
+
+    return response()->json(['message' => 'User updated successfully'], 200);
+}
+
+
+
+
+
 public function allusers()
     {
         // Récupérer tous les utilisateurs
@@ -62,11 +88,43 @@ public function allusers()
         return response()->json($users);
     }
 
+
+
+public function deleteuser(string $id)
+    {
+        try {
+
+            // Trouver le livre par son ID
+            $user = User::findOrFail($id);
+            // Supprimer le livre
+            $user->delete();
+    
+            return response()->json([
+                'message' => 'utilisateur supprimé avec succès.',
+            ]);
+
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'utilisateur non trouvé ou erreur lors de la suppression.',
+            ], 404);
+        }
+    }
+
     
 public function logout(Request $request)
 {
     $request->user()->token()->revoke();
     return response()->json(['message' => 'Successfully logged out'], 200);
 }
+
+
+public function authUser()
+{
+    $user = Auth::user(); // ou auth()->user();
+    
+    return response()->json($user);
+}
+
 
 }

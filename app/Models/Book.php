@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SaleBook;
 use App\Models\Sale;
+use App\Models\Author;
 
 
 class Book extends Model
@@ -29,6 +30,7 @@ class Book extends Model
         'author_id',
         
     ];
+    
     protected $dates = ['deleted_at'];
 
 
@@ -41,5 +43,8 @@ class Book extends Model
                     ->withTimestamps(); // Ajoute les timestamps si nécessaire
     }
 
-
+    public function author()
+    {
+        return $this->belongsTo(Author::class);
+    }
 }

@@ -9,16 +9,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class News extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    // SoftDeletes;
     protected $fillable = [
         'name',
         'description',
         'newsdate',
         'image',
+        'type',
+        'frome',
         'user_id',
+        'author_id',
      ];
 
 
-     protected $dates = ['deleted_at'];
+    //  protected $dates = ['deleted_at'];
      // MyApp Personal Access Client
 }

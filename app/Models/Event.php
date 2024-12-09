@@ -9,16 +9,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
        'name',
        'description',
        'eventdate',
+       'enddate',
+       'type',
+       'frome',
        'image',
        'user_id',
+       'author_id',
     ];
 
-    protected $dates = ['deleted_at'];
+    // protected $dates = ['deleted_at'];
     // MyApp Personal Access Client
 }

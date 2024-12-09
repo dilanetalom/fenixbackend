@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\SaleBook;
-use App\Models\Book;
 
 
 class Sale extends Model
@@ -18,15 +16,18 @@ class Sale extends Model
         'paiement_type',
         'total_price',
         'status',
+        'quantity',
+        'type_book',
+        'book_id',
+        'user_id',
     ];
     protected $dates = ['deleted_at'];
 
 
-    public function books()
+    public function book()
     {
-        return $this->belongsToMany(Book::class)
-                    ->using(SaleBook::class) 
-                    ->withPivot(['quantity', 'total_price', 'type_book']) 
-                    ->withTimestamps(); 
+        return $this->belongsTo(Book::class, 'book_id');
     }
+
+    
 }

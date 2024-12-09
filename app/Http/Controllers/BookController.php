@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Author;
+use App\Models\News;
+use App\Models\Event;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -20,7 +22,7 @@ class BookController extends Controller
         try {
            
             // Tenter de récupérer les livres depuis le cache
-            $books = Book::get(); // Récupérer les livres 
+            $books = Book::orderBy('created_at', 'desc')->get(); // Récupérer les livres 
            
     
             // Retourner les livres en JSON
@@ -48,7 +50,7 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('Fichiers dans la requête:', $request->files->all());
+     
            $validator = Validator::make($request->all(), [
             'title'=> 'required|string|max:255',
             'description'=> 'required|string|max:255',
@@ -64,44 +66,40 @@ class BookController extends Controller
             'gender'=> 'required|string|max:255',
             'author_id'=> 'required|integer',
             'country'=> 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'error' => $e->getMessage(),
-                'code' => $e->getCode(), // Pour plus de détails
+                'code' => $e->getCode(),
             ], 400);
         }
 
         try {
-
-
-             // Gérer l'upload de l'image
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('images/books'), $imageName);
-
+ 
+            $images = $request->file('image');
+            $imageName = time() . '_' . $images->getClientOriginalName();
+            $images->move(public_path('images/books'), $imageName);
             // Enregistrer le livre dans la base de données avec l'image
             $book = Book::create([
                 'title' => $request->title,
                 'description' => $request->description,
                 'category' => $request->category,
                 'language' => $request->language,
-                'image' => 'images/books/' . $imageName, // Chemin de l'image enregistré
+                'image' => $imageName, // Chemin de l'image enregistré
                 'status' => $request->status,
                 'niveau' => $request->niveau,
                 'pub_date' => $request->pub_date,
-                'price' => $request->price,
+                'price_n' => $request->price_n,
+                'price_p' => $request->price_p,
                 'user_id' => $request->user_id,
                 'author_id' => $request->author_id, // Vous avez déjà l'auteur ici
             ]);
 
             return response()->json(['message' => 'Book created successfully', 'book' => $book], 201);
-        }
+        // }
 
-        return response()->json(['error' => 'File not uploaded'], 400);
+        // return response()->json(['error' => 'File not uploaded'], 400);
 
 
        } catch (Exception $e) {
@@ -162,51 +160,29 @@ class BookController extends Controller
 
     public function update(Request $request, string $id)
     {
+        // Log::info($request->all());
         //  Valider les champs et l'image
-         $request->validate([
-            'title' => 'string|max:255',
-            'description' => 'string',
-            'category' => 'string',
-            'language' => 'string',
-            'stau=tus' => 'string',
-            'niveau' => 'string',
-            'pub_date' => 'date',
-            'price' => 'numeric',
-            'user_id' => 'integer',
-            'author_id' => 'integer',
-        ]);
+        //  $request->validate([
+        //     'title' => 'string|max:255',
+        //     'description' => 'string',
+        //     'category' => 'string',
+        //     'language' => 'string',
+        //     'status' => 'string',
+        //     'niveau' => 'string',
+        //     'pub_date' => 'date',
+        //     'price_n' => 'numeric',
+        //     'price_p' => 'numeric',
+        //     'user_id' => 'integer',
+        //     'author_id' => 'integer',
+        // ]);
+
 
         // Trouver le livre à mettre à jour
-      
-        // Si une nouvelle image est fournie, la gérer
         $book = Book::findOrFail($id);
-        $author = Author::findOrFail($book->author_id);
-     
-        // if ($request->hasFile('imageauthor')) {
-        //     $images = $request->file('imageauthor');
-        //     $imageauthor = time() . '_' . $images->getClientOriginalName();
-        //     $images->move(public_path('images/author'), $imageauthor);
-
-          
-        //     if ($author->imageauthor) {
-        //         $oldImagePath = public_path($author->imageauthor);
-        //         if (file_exists($oldImagePath)) {
-        //             unlink($oldImagePath);
-        //         }
-        //     }
-
-                 
-        //     $author->imageauthor = 'images/author/' . $imageauthor;          
-       
-        // }
-
-      if ($request->name && $request->gende) {
-        $author->name= $request->name;
-        $author->gende= $request->gender;
-        $author->country= $request->country;
-
-        $author->save();
-      }
+        Log::info($book);
+      
+        try {
+           
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -222,10 +198,11 @@ class BookController extends Controller
             }
 
             // Mettre à jour le chemin de la nouvelle image
-            $book->image = 'images/books/' . $imageName;
+            $book->image =  $imageName;
         }
 
         // Mettre à jour les autres champs
+  
         $book->title = $request->title;
         $book->description = $request->description;
         $book->category = $request->category;
@@ -233,18 +210,27 @@ class BookController extends Controller
         $book->status = $request->status;
         $book->niveau = $request->niveau;
         $book->pub_date = $request->pub_date;
-        $book->price = $request->price;
+        $book->price_n = $request->price_n;
+        $book->price_p = $request->price_p;
         $book->user_id = $request->user_id;
         $book->author_id = $request->author_id;
 
         // Enregistrer les modifications
         $book->save();
 
-        return response()->json(['message' => 'Book updated successfully', 'book' => $book], 200);
-    
+      
+        return response()->json([
+            'message' => 'Book updated successfully', 
+            'book' => $book
+        ], 200);
+    } catch (Exception $e) {
+        Log::error('Erreur de modification : ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Erreur de modification: ' . $e->getMessage(),
+        ], 500);
+
+        }
     }
-
-
 
     /**
      * Remove the specified resource from storage.
@@ -255,6 +241,7 @@ class BookController extends Controller
     public function destroy(string $id)
     {
         try {
+
             // Trouver le livre par son ID
             $book = Book::findOrFail($id);
             if ($book->image) {
@@ -269,6 +256,8 @@ class BookController extends Controller
             return response()->json([
                 'message' => 'Livre supprimé avec succès.',
             ]);
+
+
         } catch (Exception $e) {
             return response()->json([
                 'error' => 'Livre non trouvé ou erreur lors de la suppression.',
@@ -286,6 +275,7 @@ class BookController extends Controller
         try {
             // Trouver le livre par son ID
             $author = Author::findOrFail($id);
+            $author->books()->delete();
             if ($author->imageauthor) {
                 $oldImagePath = public_path($author->imageauthor);
                 if (file_exists($oldImagePath)) {
@@ -299,9 +289,11 @@ class BookController extends Controller
                  
             ]);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'Auteur non trouvé ou erreur lors de la suppression.',
-            ], 404);
+        Log::error('Erreur de suppression : ' . $e->getMessage());
+        return response()->json([
+            'error' => 'Erreur de suppression: ' . $e->getMessage(),
+        ], 500);
+
         }
     }
 
@@ -349,19 +341,19 @@ class BookController extends Controller
 public function saveauthor(Request $request)
 {
     // Validation des données entrantes
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255',
-        'gender' => 'nullable|string|max:10',
-        'country' => 'nullable|string|max:100',
-        'imageauthor' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'description' => 'nullable|string',
-        'date_nais' => 'nullable|date',
-        'email' => 'nullable|email|unique:authors,email',
-    ]);
+    // $validator = Validator::make($request->all(), [
+    //     'name' => 'required|string|max:255',
+    //     'gender' => 'nullable|string|max:10',
+    //     'country' => 'nullable|string|max:100',
+    //     'imageauthor' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    //     'description' => 'nullable|string',
+    //     'date_nais' => 'nullable|date',
+    //     'email' => 'nullable|email|unique:authors,email',
+    // ]);
 
-    if ($validator->fails()) {
-        return response()->json($validator->errors(), 422);
-    }
+    // if ($validator->fails()) {
+    //     return response()->json($validator->errors(), 422);
+    // }
 
     // Gérer le téléchargement de l'image
  
@@ -447,7 +439,7 @@ public function allauthor()
 {
     try {
          // Récupérer tous les auteurs 
-    $author = Author::all();
+    $author = Author::with('books')->orderBy('created_at', 'desc')->get();
 
     // Retourner les auteurs  en JSON
     return response()->json($author);
@@ -477,6 +469,29 @@ public function allbookbyuser(String $id)
             'error' => $e->getMessage(),
         ], 400);
     }
+  
+}
+
+public function count()
+{
+    // Compter le nombre d'auteurs
+    $authorsCount = Author::count();
+
+    // Compter le nombre de livres
+    $booksCount = Book::count();
+
+    // Compter le nombre d'actualités
+    $newsCount = News::count();
+
+    $eventCount = Event::count();
+
+    // Retourner les résultats
+    return response()->json([
+        'authors_count' => $authorsCount,
+        'books_count' => $booksCount,
+        'news_count' => $newsCount,
+        'event_count' => $eventCount,
+    ]);
   
 }
 
