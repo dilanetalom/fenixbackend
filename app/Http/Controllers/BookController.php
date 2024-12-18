@@ -62,17 +62,15 @@ class BookController extends Controller
             'price_n'=> 'required|string|max:255',
             'price_p'=> 'required|string|max:255',
             'user_id'=> 'required|string|max:255',
-            'name'=> 'required|string|max:255',
-            'gender'=> 'required|string|max:255',
             'author_id'=> 'required|integer',
-            'country'=> 'required|string|max:255',
+
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'error' => $e->getMessage(),
-                'code' => $e->getCode(),
-            ], 400);
+                'error' => 'Validation failed', // Message d'erreur générique
+                'messages' => $validator->errors(), // Détails des erreurs
+            ], 400);;
         }
 
         try {
@@ -121,7 +119,7 @@ class BookController extends Controller
     {
         try {
             // Récupérer un livre 
-       $book = Book::find($id);
+            $book = Book::with('author')->where('id', $id)->first();
 
        // Retourner les details du livre
        return response()->json($book);
@@ -160,26 +158,10 @@ class BookController extends Controller
 
     public function update(Request $request, string $id)
     {
-        // Log::info($request->all());
-        //  Valider les champs et l'image
-        //  $request->validate([
-        //     'title' => 'string|max:255',
-        //     'description' => 'string',
-        //     'category' => 'string',
-        //     'language' => 'string',
-        //     'status' => 'string',
-        //     'niveau' => 'string',
-        //     'pub_date' => 'date',
-        //     'price_n' => 'numeric',
-        //     'price_p' => 'numeric',
-        //     'user_id' => 'integer',
-        //     'author_id' => 'integer',
-        // ]);
-
-
+        
         // Trouver le livre à mettre à jour
         $book = Book::findOrFail($id);
-        Log::info($book);
+        Log::info($request);
       
         try {
            
@@ -202,21 +184,23 @@ class BookController extends Controller
         }
 
         // Mettre à jour les autres champs
-  
-        $book->title = $request->title;
-        $book->description = $request->description;
-        $book->category = $request->category;
-        $book->language = $request->language;
-        $book->status = $request->status;
-        $book->niveau = $request->niveau;
-        $book->pub_date = $request->pub_date;
-        $book->price_n = $request->price_n;
-        $book->price_p = $request->price_p;
-        $book->user_id = $request->user_id;
-        $book->author_id = $request->author_id;
 
-        // Enregistrer les modifications
-        $book->save();
+        $book->update([
+          
+            'title' => $request->title,
+            'description' => $request->description,
+            'category' => $request->category,
+            'language' => $request->language,
+            'status' => $request->status,
+            'niveau' => $request->niveau,
+            'pub_date' => $request->pub_date,
+            'price_n' => $request->price_n,
+            'price_p' => $request->price_p,
+            'user_id' => $request->user_id,
+            'author_id' => $request->author_id,
+        ]);
+    
+
 
       
         return response()->json([
@@ -391,7 +375,11 @@ public function updateAuthor(Request $request, $id)
     // Update the author's attributes
     $author->update([
         'name' => $request->name,
-        // ... other fields to update
+        'gender' => $request->gender,
+        'country' => $request->country,
+        'description' => $request->description,
+        'date_nais' => $request->date_nais,
+        'email' => $request->email,
     ]);
 
     // Handle image update (optional)
@@ -419,13 +407,17 @@ public function updateAuthor(Request $request, $id)
 public function getbyauthor(string $id)
 {
     try {
-         // Récupérer tous les auteurs 
-    $author = Author::find($id);
+        // Récupérer l'auteur avec ses livres
+        $author = Author::with(['books', 'events']) // Charger les livres et événements
+        ->findOrFail($id);
 
-    // Retourner les auteurs  en JSON
-    return response()->json($author);
+        if (!$author) {
+            return response()->json(['error' => 'Auteur non trouvé'], 404);
+        }
 
-    } catch (Exception $e) {
+        // Retourner l'auteur et ses livres en JSON
+        return response()->json($author);
+    } catch (\Exception $e) {
         // Retourner une réponse JSON avec le message d'erreur
         return response()->json([
             'error' => $e->getMessage(),

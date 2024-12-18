@@ -26,14 +26,17 @@ use Darkaonline\L5Swagger\Swagger;
 
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('register', [AuthController::class, 'register']);
-
+Route::get('getbook', [BookController::class, 'index']);
+Route::get('getbybook/{id}', [BookController::class, 'show']);
+Route::get('allauthor', [BookController::class, 'allauthor']);
+Route::get('getbyauthor/{id}', [BookController::class, 'getbyauthor']);
+Route::get('getnews', [NewsController::class, 'index']);
+Route::post('/readers', [ReaderController::class, 'store']);
 
 Route::middleware('auth:api')->group(function () {
 
     Route::post('logout', [AuthController::class, 'logout']);
     Route::post('authUser', [AuthController::class, 'authUser']);
-    Route::get('getbook', [BookController::class, 'index']);
-    
     Route::get('allusers', [AuthController::class, 'allusers']);
     Route::delete('deleteuser/{id}', [AuthController::class, 'deleteuser']);
     Route::put('updateuser/{id}', [AuthController::class, 'update']);
@@ -42,10 +45,7 @@ Route::middleware('auth:api')->group(function () {
     
     Route::post('savebook', [BookController::class, 'store']);
     Route::post('saveauthor', [BookController::class, 'saveauthor']);
-    Route::get('allauthor', [BookController::class, 'allauthor']);
-    Route::get('getbyauthor/{id}', [BookController::class, 'getbyauthor']);
-    Route::get('getbybook/{id}', [BookController::class, 'show']);
-    Route::put('updatebook/{id}', [BookController::class, 'update']);
+    Route::post('updatebook/{id}', [BookController::class, 'update']);
     Route::put('updateauthors/{id}', [BookController::class, 'updateAuthor']);
     Route::delete('deletebook/{id}', [BookController::class, 'destroy']);
     Route::delete('deleteauthor/{id}', [BookController::class, 'deleteauthor']);
@@ -58,14 +58,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('getevent', [EventController::class, 'index']);
     Route::post('saveevent', [EventController::class, 'store']);
     Route::get('getbyevent/{id}', [EventController::class, 'show']);
-    Route::put('updateevent/{id}', [EventController::class, 'update']);
+    Route::post('updateevent/{id}', [EventController::class, 'update']);
     Route::delete('deleteevent/{id}', [EventController::class, 'destroy']);
     
     // Routes pour la gestion des actualites
-    Route::get('getnews', [NewsController::class, 'index']);
+
     Route::post('savenews', [NewsController::class, 'store']);
     Route::get('getbynews/{id}', [NewsController::class, 'show']);
-    Route::put('updatenews/{id}', [NewsController::class, 'update']);
+    Route::post('updatenews/{id}', [NewsController::class, 'update']);
     Route::delete('deletenews/{id}', [NewsController::class, 'destroy']);
 
     // gestion des lecteurs
@@ -73,7 +73,7 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/readers', [ReaderController::class, 'index']); // Récupérer tous les lecteurs
     Route::get('/readers/{id}', [ReaderController::class, 'show']); // Récupérer un lecteur
-    Route::post('/readers', [ReaderController::class, 'store']); // Créer un nouveau lecteur
+    // Route::post('/readers', [ReaderController::class, 'store']); // Créer un nouveau lecteur
     Route::put('/readers/{id}', [ReaderController::class, 'update']); // Mettre à jour un lecteur
     Route::delete('/readers/{id}', [ReaderController::class, 'destroy']);
 

@@ -12,5 +12,6 @@ class Reader extends Model
     protected $fillable = [
         'email',
         'name',
+        'phone',
     ];
 }

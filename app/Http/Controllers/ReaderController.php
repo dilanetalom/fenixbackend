@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Reader;
+use Illuminate\Support\Facades\Log;
 
 class ReaderController extends Controller
 {
@@ -29,12 +30,25 @@ class ReaderController extends Controller
      */
     public function store(Request $request)
     {
+    
         $request->validate([
             'email' => 'required|email|unique:readers,email',
+            'name' => 'string',
+            'phone' => 'string',
         ]);
 
+        try{
+          
         $reader = Reader::create($request->all());
+        Log::info($request->all());
         return response()->json($reader, 201);
+    } catch (\Exception $e) {
+        // Retourner une réponse JSON avec le message d'erreur
+        return response()->json([
+            'error' => $e->getMessage(),
+        ], 400);
+    }
+
     }
 
     /**
@@ -62,6 +76,8 @@ class ReaderController extends Controller
         $reader = Reader::findOrFail($id);
         $request->validate([
             'email' => 'required|email|unique:readers,email,' . $reader->id,
+            'name' => 'string',
+            'phone' => 'string',
         ]);
 
         $reader->update($request->all());

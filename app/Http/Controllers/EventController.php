@@ -137,9 +137,10 @@ class EventController extends Controller
        
         try {
             // Trouver le evennement par son ID
-            Log::info('Données reçues pour mise à jour:', $request->all());
+           
             $event = Event::findOrFail($id);
 
+      
             if ($request->hasFile('image')) {
                 $images = $request->file('image');
                 $image = time() . '_' . $images->getClientOriginalName();

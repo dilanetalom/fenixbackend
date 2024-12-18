@@ -149,14 +149,31 @@ class NewsController extends Controller
         
             // Enregistrer l'image si un nouveau fichier est téléchargé
             if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imageName = time() . '_' . $image->getClientOriginalName();
+                $image->move(public_path('images/news'), $imageName);
+    
                 // Supprimer l'ancienne image si elle existe
                 if ($news->image) {
-                    Storage::disk('public')->delete($news->image);
+                    $oldImagePath = public_path($news->image);
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
                 }
-                // Stocker la nouvelle image
-                $imagePath = $request->file('image')->store('images/news', 'public');
-                $news->image = $imagePath; // Mettre à jour le chemin de l'image
+    
+                // Mettre à jour le chemin de la nouvelle image
+                $news->image =  $imageName;
             }
+    
+            // if ($request->hasFile('image')) {
+            //     // Supprimer l'ancienne image si elle existe
+            //     if ($news->image) {
+            //         Storage::disk('public')->delete($news->image);
+            //     }
+            //     // Stocker la nouvelle image
+            //     $imagePath = $request->file('image')->store('images/news', 'public');
+            //     $news->image = $imagePath; // Mettre à jour le chemin de l'image
+            // }
         
             // Mettre à jour les autres champs
             $news->name = $request->name;

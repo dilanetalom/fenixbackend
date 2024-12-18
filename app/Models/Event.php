@@ -25,4 +25,9 @@ class Event extends Model
 
     // protected $dates = ['deleted_at'];
     // MyApp Personal Access Client
+
+    public function author()
+    {
+        return $this->belongsTo(Author::class); // Un événement appartient à un auteur
+    }
 }
